@@ -37,11 +37,10 @@ jobs:
 
       - name: Run Forge build
         run: |
-          forge --version
-          forge build --sizes
+          yarn run compile
         id: build
 
       - name: Run Forge tests
         run: |
-          forge test -vvv
+          yarn run test-foundry
         id: test
