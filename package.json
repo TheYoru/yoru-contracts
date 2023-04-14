@@ -1,0 +1,8 @@
+{
+  "name": "yoru-contracts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:TheYoru/yoru-contracts.git",
+  "author": "Charles Jhong <charlesjhongc@gmail.com>",
+  "license": "MIT"
+}
