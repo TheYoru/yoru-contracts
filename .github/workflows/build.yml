@@ -41,6 +41,8 @@ jobs:
         id: build
 
       - name: Run Forge tests
+        env:
+          NODE_RPC: ${{ secrets.NODE_RPC }}
         run: |
           yarn run test-foundry
         id: test
