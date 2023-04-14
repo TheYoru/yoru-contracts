@@ -4,5 +4,17 @@
   "main": "index.js",
   "repository": "git@github.com:TheYoru/yoru-contracts.git",
   "author": "Charles Jhong <charlesjhongc@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "format": "prettier --write .",
+    "check-pretty": "prettier --check .",
+    "lint": "solhint \"contracts/**/*.sol\"",
+    "compile": "forge build --force"
+  },
+  "dependencies": {
+    "prettier": "^2.8.7",
+    "prettier-plugin-solidity": "^1.1.3",
+    "solhint": "^3.4.1",
+    "solhint-plugin-prettier": "^0.0.5"
+  }
 }
