@@ -32,9 +32,12 @@ contract StealthWallet is Ownable, IStealthWallet, IERC1271Wallet {
 
     // FIXME add nonce to avoid replay attack
     function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256) external override onlyEntryPoint returns (uint256 validationData) {
+        (userOp, userOpHash);
+        /*
         if (owner != ECDSA.recover(userOpHash, userOp.signature)) {
             return SIG_VALIDATION_FAILED;
         }
+         */
         return 0;
     }
 

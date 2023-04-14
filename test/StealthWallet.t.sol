@@ -8,6 +8,8 @@ import { PayMaster } from "contracts/PayMaster.sol";
 import { UserOperation, UserOperationLib } from "contracts/lib/UserOperation.sol";
 import { IEntryPoint } from "contracts/interfaces/IEntryPoint.sol";
 
+import "forge-std/console.sol";
+
 contract StealthWalletTest is Test {
     using SafeERC20 for IERC20;
     using UserOperationLib for UserOperation;
@@ -29,18 +31,25 @@ contract StealthWalletTest is Test {
         payMaster = new PayMaster(owner, goerliEntryPoint);
 
         deal(owner, 1000 ether);
+        deal(address(payMaster), 1000 ether);
         deal(goerliDAI, owner, 1000 ether);
+        deal(goerliDAI, address(stealthWallet), 1000);
         vm.startPrank(owner);
         IERC20(goerliDAI).safeApprove(address(stealthWallet), type(uint256).max);
+        payMaster.deposit{ value: 10 ether }();
         vm.stopPrank();
 
         vm.label(owner, "owner");
         vm.label(address(stealthWallet), "stealthWallet");
+        vm.label(address(payMaster), "payMaster");
     }
 
-    function testValidateUserOp() public {
+    function testHandleOps() public {
+        uint256 balanceBefore = IERC20(goerliDAI).balanceOf(address(stealthWallet));
+        console.log(balanceBefore);
+
         // compose calldata and user operations
-        bytes memory erc20Calldata = abi.encodeWithSelector(IERC20.transfer.selector, owner, 100);
+        bytes memory erc20Calldata = abi.encodeWithSelector(IERC20.transfer.selector, owner, 1000);
         bytes memory walletExecData = abi.encodeWithSelector(StealthWallet.executeOps.selector, goerliDAI, erc20Calldata, 0);
         uint256 validUntil = block.timestamp + 1 weeks;
         uint256 validAfter = block.timestamp - 1 weeks;
@@ -53,8 +62,8 @@ contract StealthWalletTest is Test {
             callGasLimit: 1000000,
             verificationGasLimit: 1000000,
             preVerificationGas: 100000,
-            maxFeePerGas: 10000,
-            maxPriorityFeePerGas: 10000,
+            maxFeePerGas: 10000000,
+            maxPriorityFeePerGas: 1000000,
             paymasterAndData: pmData,
             signature: bytes("") // will be ignore when doing hash
         });
@@ -65,9 +74,11 @@ contract StealthWalletTest is Test {
 
         // send to EP
         vm.prank(owner);
-        // entryPoint.handleOps(ups, payable(owner));
+        entryPoint.handleOps(ups, payable(owner));
 
         // check state changes
+        uint256 balanceAfter = IERC20(goerliDAI).balanceOf(address(stealthWallet));
+        console.log(balanceAfter);
     }
 
     function getUserOpHash(UserOperation calldata userOp, address target, uint256 chainId) external view returns (bytes32) {

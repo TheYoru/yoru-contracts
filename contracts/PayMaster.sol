@@ -30,7 +30,7 @@ contract PayMaster is IPaymaster, Ownable {
         // TODO check whether initCode has valid factory address
         (uint48 validUntil, uint48 validAfter, ) = _parsePaymasterAndData(userOp.paymasterAndData);
 
-        return ("", _packValidationData(address(this), uint256(validUntil), uint256(validAfter)));
+        return ("", _packValidationData(address(0), uint256(validUntil), uint256(validAfter)));
     }
 
     function postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) external override onlyEntryPoint {
