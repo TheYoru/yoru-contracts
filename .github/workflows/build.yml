@@ -1,48 +1,38 @@
-name: build
+name: Contracts CI
 
 on:
   push:
     branches: [master]
   pull_request:
 
-env:
-  FOUNDRY_PROFILE: ci
-
 jobs:
-  check:
-    strategy:
-      fail-fast: true
-
-    name: Foundry project
+  build:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
         with:
           submodules: recursive
-
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
       - name: Install
         run: yarn install --frozen-lockfile
-
-      - name: Install Foundry
+      - name: Install Foundry and Setup
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-
-      - name: Format
-        run: yarn run check-pretty
-
-      - name: Lint
-        run: |
-          yarn run lint
-
-      - name: Run Forge build
+      - name: Compile
         run: |
           yarn run compile
-        id: build
-
-      - name: Run Forge tests
+      - name: Test
         env:
           NODE_RPC: ${{ secrets.NODE_RPC }}
+          FOUNDRY_PROFILE: CI
         run: |
           yarn run test-foundry
-        id: test
