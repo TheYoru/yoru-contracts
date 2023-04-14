@@ -8,6 +8,8 @@ import { PayMaster } from "contracts/PayMaster.sol";
 import { UserOperation, UserOperationLib } from "contracts/lib/UserOperation.sol";
 import { IEntryPoint } from "contracts/interfaces/IEntryPoint.sol";
 
+import "forge-std/console.sol";
+
 contract StealthWalletTest is Test {
     using SafeERC20 for IERC20;
     using UserOperationLib for UserOperation;
@@ -43,6 +45,9 @@ contract StealthWalletTest is Test {
     }
 
     function testHandleOps() public {
+        uint256 balanceBefore = IERC20(goerliDAI).balanceOf(address(stealthWallet));
+        console.log(balanceBefore);
+
         // compose calldata and user operations
         bytes memory erc20Calldata = abi.encodeWithSelector(IERC20.transfer.selector, owner, 1000);
         bytes memory walletExecData = abi.encodeWithSelector(StealthWallet.executeOps.selector, goerliDAI, erc20Calldata, 0);
@@ -72,6 +77,8 @@ contract StealthWalletTest is Test {
         entryPoint.handleOps(ups, payable(owner));
 
         // check state changes
+        uint256 balanceAfter = IERC20(goerliDAI).balanceOf(address(stealthWallet));
+        console.log(balanceAfter);
     }
 
     function getUserOpHash(UserOperation calldata userOp, address target, uint256 chainId) external view returns (bytes32) {
