@@ -21,7 +21,7 @@ contract StealthWallet is Ownable, IStealthWallet, IERC1271Wallet {
         _;
     }
 
-    constructor(address _entryPoint, address _owner) Ownable(_owner) {
+    constructor(address _owner, address _entryPoint) Ownable(_owner) {
         entryPoint = _entryPoint;
     }
 
