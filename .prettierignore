@@ -1,0 +1,14 @@
+# dependency
+node_modules/
+
+# Coverage files
+coverage/
+coverage.json
+
+# Foundry
+artifacts/
+cache/
+/lib
+
+# Signing test payload
+test/signing/payload/
