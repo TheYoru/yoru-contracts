@@ -15,6 +15,7 @@ jobs:
 
     name: Foundry project
     runs-on: ubuntu-latest
+    environment: CI
     steps:
       - uses: actions/checkout@v3
         with:
@@ -37,11 +38,12 @@ jobs:
 
       - name: Run Forge build
         run: |
-          forge --version
-          forge build --sizes
+          yarn run compile
         id: build
 
       - name: Run Forge tests
+        env:
+          NODE_RPC: ${{ secrets.NODE_RPC }}
         run: |
-          forge test -vvv
+          yarn run test-foundry
         id: test

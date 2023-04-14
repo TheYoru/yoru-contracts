@@ -9,7 +9,8 @@
     "format": "prettier --write .",
     "check-pretty": "prettier --check .",
     "lint": "solhint \"contracts/**/*.sol\"",
-    "compile": "forge build --force"
+    "compile": "forge build --force",
+    "test-foundry": "forge test --fork-url $NODE_RPC --fork-block-number 882899"
   },
   "dependencies": {
     "prettier": "^2.8.7",
