@@ -22,6 +22,13 @@ jobs:
         with:
           version: nightly
 
+      - name: Format
+        run: yarn run check-pretty
+
+      - name: Lint
+        run: |
+          yarn run lint
+
       - name: Run Forge build
         run: |
           forge --version
