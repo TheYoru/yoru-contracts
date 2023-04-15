@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.12;
+pragma solidity 0.8.17;
 
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 

@@ -1,9 +1,10 @@
 pragma solidity 0.8.17;
 
+import { UserOperation, UserOperationLib } from "@account-abstraction/core/BaseAccount.sol";
+import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
+
 import { Ownable } from "./abstracts/Ownable.sol";
-import { UserOperation } from "./lib/UserOperation.sol";
 import { IPaymaster } from "./interfaces/IPaymaster.sol";
-import { IEntryPoint } from "./interfaces/IEntryPoint.sol";
 
 contract PayMaster is IPaymaster, Ownable {
     IEntryPoint public immutable entryPoint;

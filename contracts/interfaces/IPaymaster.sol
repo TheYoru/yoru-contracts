@@ -1,6 +1,6 @@
 pragma solidity ^0.8.17;
 
-import { UserOperation } from "../lib/UserOperation.sol";
+import { UserOperation } from "@account-abstraction/core/BaseAccount.sol";
 
 interface IPaymaster {
     enum PostOpMode {
