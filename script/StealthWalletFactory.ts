@@ -4,13 +4,8 @@ import { abi as factoryAbi } from "../artifacts/StealthWalletFactory.sol/Stealth
 async function main() {
     const factoryAddress = "0xb1ae118a4f5089812296BC2714a0cB261f99cEBb"
 
-    const provider = new ethers.providers.JsonRpcProvider(
-        "",
-    )
-    const wallet = new ethers.Wallet(
-        "",
-        provider,
-    )
+    const provider = new ethers.providers.JsonRpcProvider("")
+    const wallet = new ethers.Wallet("", provider)
     const factory = new ethers.Contract(factoryAddress, factoryAbi, wallet)
 
     const newAddress = await factory.getAddress(

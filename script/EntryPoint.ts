@@ -12,13 +12,8 @@ async function main() {
     const yoruAddress = "0x8D977171D2515f375d0E8E8623e7e27378eE70Fa"
     const userOpHelperAddress = "0x63087b831D80Db6f65930339cFA38D4f7E486db3"
 
-    const provider = new ethers.providers.JsonRpcProvider(
-        "",
-    )
-    const wallet = new ethers.Wallet(
-        "",
-        provider,
-    )
+    const provider = new ethers.providers.JsonRpcProvider("")
+    const wallet = new ethers.Wallet("", provider)
     const entryPoint = new ethers.Contract(entryPointAddress, entryPointAbi, wallet)
     const factory = new ethers.Contract(factoryAddress, factoryAbi, wallet)
     const yoru = new ethers.Contract(yoruAddress, yoruAbi, wallet)

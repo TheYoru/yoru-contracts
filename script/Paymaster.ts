@@ -4,13 +4,8 @@ import { abi as paymasterAbi } from "../artifacts/PayMaster.sol/PayMaster.json"
 async function main() {
     const paymasterAddress = "0xb666fE2b562be86590c4DF43F12Ab1DBA9EC209C"
 
-    const provider = new ethers.providers.JsonRpcProvider(
-        "",
-    )
-    const wallet = new ethers.Wallet(
-        "",
-        provider,
-    )
+    const provider = new ethers.providers.JsonRpcProvider("")
+    const wallet = new ethers.Wallet("", provider)
     const paymaster = new ethers.Contract(paymasterAddress, paymasterAbi, wallet)
     const depositBefore = await paymaster.getDeposit()
     console.log(`Deposit before: ${depositBefore.toString()}`)

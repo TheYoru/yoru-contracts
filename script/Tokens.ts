@@ -5,13 +5,8 @@ async function main() {
     const tokenAddress = "0x74D4872e4FDFdF14B4Eb228D66Ff6F3833E95F07"
     const yoruAddress = "0x8D977171D2515f375d0E8E8623e7e27378eE70Fa"
 
-    const provider = new ethers.providers.JsonRpcProvider(
-        "",
-    )
-    const wallet = new ethers.Wallet(
-        "",
-        provider,
-    )
+    const provider = new ethers.providers.JsonRpcProvider("")
+    const wallet = new ethers.Wallet("", provider)
     const token = new ethers.Contract(tokenAddress, tokenAbi, wallet)
 
     const feeData = await provider.getFeeData()
