@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.17;
 
-import "../../contracts/StealthWalletFactory.sol";
-import "../../contracts/StealthWallet.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { Test } from "forge-std/Test.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
+import { StealthWallet } from "contracts/StealthWallet.sol";
+import { StealthWalletFactory } from "contracts/StealthWalletFactory.sol";
 
 /**
  * This contract is for some handy functions targeting StealthWallet & StealthWalletFactory.
