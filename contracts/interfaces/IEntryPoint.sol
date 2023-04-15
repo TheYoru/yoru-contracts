@@ -1,6 +1,7 @@
 pragma solidity ^0.8.17;
 
-import { UserOperation } from "../lib/UserOperation.sol";
+import { UserOperation } from "@account-abstraction/core/BaseAccount.sol";
+
 import { IAggregator } from "./IAggregator.sol";
 import { IStakeManager } from "./IStakeManager.sol";
 

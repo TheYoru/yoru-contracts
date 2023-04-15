@@ -1,19 +1,17 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.17;
 
-// import "@account-abstraction/interfaces/UserOperation.sol";
+import { UserOperation, UserOperationLib } from "@account-abstraction/core/BaseAccount.sol";
 import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-// import { UserOperation, UserOperationLib } from "contracts/lib/UserOperation.sol";
-import "contracts/StealthWallet.sol";
-import "contracts/StealthWalletFactory.sol";
+import { StealthWallet } from "contracts/StealthWallet.sol";
+import { StealthWalletFactory } from "contracts/StealthWalletFactory.sol";
 import { PayMaster } from "contracts/PayMaster.sol";
 
 import { StealthWalletUtils } from "./utils/StealthWalletUtils.sol";
 import { ERC20Mintable } from "./utils/ERC20Mintable.sol";
 
 import { Test } from "forge-std/Test.sol";
-import "forge-std/console.sol";
 
 contract StealthWalletTest is Test {
     using UserOperationLib for UserOperation;
@@ -33,9 +31,7 @@ contract StealthWalletTest is Test {
     ERC20Mintable token;
 
     function setUp() public {
-        (address _walletOwner, uint256 _walletOwnerKey) = makeAddrAndKey("owner");
-        walletOwner = _walletOwner;
-        walletOwnerKey = _walletOwnerKey;
+        (walletOwner, walletOwnerKey) = makeAddrAndKey("owner");
 
         payMaster = new PayMaster(walletOwner, entrypoint);
         stealthWalletFactory = new StealthWalletFactory(entrypoint);
