@@ -1,92 +1,185 @@
-pragma solidity 0.8.17;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Test } from "forge-std/Test.sol";
-import { StealthWallet } from "contracts/StealthWallet.sol";
+// import "@account-abstraction/interfaces/UserOperation.sol";
+import { IEntryPoint } from "@account-abstraction/interfaces/IEntryPoint.sol";
+
+// import { UserOperation, UserOperationLib } from "contracts/lib/UserOperation.sol";
+import "contracts/StealthWallet.sol";
+import "contracts/StealthWalletFactory.sol";
 import { PayMaster } from "contracts/PayMaster.sol";
-import { UserOperation, UserOperationLib } from "contracts/lib/UserOperation.sol";
-import { IEntryPoint } from "contracts/interfaces/IEntryPoint.sol";
 
+import { StealthWalletUtils } from "./utils/StealthWalletUtils.sol";
+import { ERC20Mintable } from "./utils/ERC20Mintable.sol";
+
+import { Test } from "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 contract StealthWalletTest is Test {
-    using SafeERC20 for IERC20;
     using UserOperationLib for UserOperation;
 
-    uint256 goerliChaindId = 5;
-    address public constant goerliEntryPoint = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
-    // FIXME to be updated
-    address public constant goerliDAI = 0x73967c6a0904aA032C103b4104747E88c566B1A2;
+    // address public constant entrypoint = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789; // new
+    address public constant entrypoint = 0x0576a174D229E3cFA37253523E645A78A0C91B57; // old
 
-    IEntryPoint entryPoint = IEntryPoint(goerliEntryPoint);
-    StealthWallet stealthWallet;
+    address walletOwner;
+    uint256 walletOwnerKey;
+    address receiver = makeAddr("receiver");
+
     PayMaster payMaster;
+    StealthWalletFactory public stealthWalletFactory;
+    StealthWallet public stealthWallet;
+    StealthWalletUtils public helpers = new StealthWalletUtils();
 
-    uint256 ownerPrivateKey = uint256(1);
-    address owner = vm.addr(ownerPrivateKey);
+    ERC20Mintable token;
 
     function setUp() public {
-        stealthWallet = new StealthWallet(owner, goerliEntryPoint);
-        payMaster = new PayMaster(owner, goerliEntryPoint);
+        (address _walletOwner, uint256 _walletOwnerKey) = makeAddrAndKey("owner");
+        walletOwner = _walletOwner;
+        walletOwnerKey = _walletOwnerKey;
 
-        deal(owner, 1000 ether);
-        deal(address(payMaster), 1000 ether);
-        deal(goerliDAI, owner, 1000 ether);
-        deal(goerliDAI, address(stealthWallet), 1000);
-        vm.startPrank(owner);
-        IERC20(goerliDAI).safeApprove(address(stealthWallet), type(uint256).max);
-        payMaster.deposit{ value: 10 ether }();
-        vm.stopPrank();
+        payMaster = new PayMaster(walletOwner, entrypoint);
+        stealthWalletFactory = new StealthWalletFactory(entrypoint);
+        token = new ERC20Mintable("Test Token", "TT");
 
-        vm.label(owner, "owner");
-        vm.label(address(stealthWallet), "stealthWallet");
+        // Setup paymaster
+        deal(address(payMaster), 1 ether);
+        payMaster.deposit{ value: 1 ether }();
+
+        vm.label(walletOwner, "walletOwner");
         vm.label(address(payMaster), "payMaster");
+        vm.label(address(stealthWallet), "stealthWallet");
+        vm.label(address(stealthWalletFactory), "stealthWalletFactory");
     }
 
-    function testHandleOps() public {
-        uint256 balanceBefore = IERC20(goerliDAI).balanceOf(address(stealthWallet));
-        console.log(balanceBefore);
+    function testStealthWalletGeneration() public {
+        uint256 salt = 0;
+        address expectedWalletAccountAddress = stealthWalletFactory.getAddress(walletOwner, salt);
+        stealthWallet = stealthWalletFactory.createAccount(walletOwner, salt);
+        address owner = stealthWallet.owner();
+        assertEq(address(stealthWallet), expectedWalletAccountAddress);
+        assertEq(owner, walletOwner);
+    }
 
-        // compose calldata and user operations
-        bytes memory erc20Calldata = abi.encodeWithSelector(IERC20.transfer.selector, owner, 1000);
-        bytes memory walletExecData = abi.encodeWithSelector(StealthWallet.executeOps.selector, goerliDAI, erc20Calldata, 0);
-        uint256 validUntil = block.timestamp + 1 weeks;
-        uint256 validAfter = block.timestamp - 1 weeks;
-        bytes memory pmData = abi.encodePacked(address(payMaster), validUntil, validAfter, bytes(""));
-        UserOperation memory up = UserOperation({
+    function testTransferERC20() public {
+        vm.deal(address(stealthWallet), 1 ether);
+        token.mint(address(stealthWallet), 100 ether);
+        assertEq(token.balanceOf(address(stealthWallet)), 100 ether);
+
+        bytes memory userOpCalldata = helpers.packERC20TransferToUserOpCalldata(address(token), receiver, token.balanceOf(address(stealthWallet)));
+
+        // Signature does not matter here since getUserOpHash() will truncate it
+        UserOperation memory userOp = UserOperation({
             sender: address(stealthWallet),
-            nonce: 0, // FIXME
+            nonce: 0,
             initCode: bytes(""),
-            callData: walletExecData,
+            callData: userOpCalldata,
             callGasLimit: 1000000,
-            verificationGasLimit: 1000000,
+            verificationGasLimit: 500000,
             preVerificationGas: 100000,
-            maxFeePerGas: 10000000,
-            maxPriorityFeePerGas: 1000000,
-            paymasterAndData: pmData,
+            maxFeePerGas: 1500000000,
+            maxPriorityFeePerGas: 1500000000,
+            paymasterAndData: bytes(""),
             signature: bytes("") // will be ignore when doing hash
         });
-        bytes memory userSig = _signUserOperation(ownerPrivateKey, this.getUserOpHash(up, address(stealthWallet), goerliChaindId));
-        up.signature = userSig;
-        UserOperation[] memory ups = new UserOperation[](1);
-        ups[0] = up;
 
-        // send to EP
-        vm.prank(owner);
-        entryPoint.handleOps(ups, payable(owner));
+        bytes32 userOpHash = this.getUserOpHash(userOp, block.chainid);
 
-        // check state changes
-        uint256 balanceAfter = IERC20(goerliDAI).balanceOf(address(stealthWallet));
-        console.log(balanceAfter);
+        userOp.signature = _signUserOperation(walletOwnerKey, userOpHash);
+
+        UserOperation[] memory ops = new UserOperation[](1);
+        ops[0] = userOp;
+
+        IEntryPoint(entrypoint).handleOps(ops, payable(walletOwner));
+
+        assertEq(token.balanceOf(address(stealthWallet)), 0);
+        assertEq(token.balanceOf(receiver), 100 ether);
     }
 
-    function getUserOpHash(UserOperation calldata userOp, address target, uint256 chainId) external view returns (bytes32) {
-        return keccak256(abi.encode(userOp.hash(), target, chainId));
+    function testTransferERC20WithInitCode() public {
+        uint256 salt = 1;
+        address newWalletAddress = stealthWalletFactory.getAddress(walletOwner, salt);
+
+        vm.deal(newWalletAddress, 1 ether);
+        token.mint(newWalletAddress, 100 ether);
+        assertEq(token.balanceOf(newWalletAddress), 100 ether);
+
+        bytes memory userOpCalldata = helpers.packERC20TransferToUserOpCalldata(address(token), receiver, token.balanceOf(newWalletAddress));
+
+        bytes memory initCodePayload = helpers.packStealthWalletInitCode(walletOwner, salt, address(stealthWalletFactory));
+
+        UserOperation memory userOp = UserOperation({
+            sender: newWalletAddress,
+            nonce: 0,
+            initCode: initCodePayload,
+            callData: userOpCalldata,
+            callGasLimit: 1500000,
+            verificationGasLimit: 1500000,
+            preVerificationGas: 1000000,
+            maxFeePerGas: 1500000000,
+            maxPriorityFeePerGas: 1500000000,
+            paymasterAndData: bytes(""),
+            signature: bytes("") // will be ignore when doing hash
+        });
+        bytes32 userOpHash = this.getUserOpHash(userOp, block.chainid);
+        userOp.signature = _signUserOperation(walletOwnerKey, userOpHash);
+
+        UserOperation[] memory ops = new UserOperation[](1);
+        ops[0] = userOp;
+
+        IEntryPoint(entrypoint).handleOps(ops, payable(walletOwner));
+
+        assertEq(token.balanceOf(newWalletAddress), 0);
+        assertEq(token.balanceOf(receiver), 100 ether);
     }
 
-    function _signUserOperation(uint256 _privateKey, bytes32 hash) private view returns (bytes memory sig) {
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_privateKey, hash);
+    function testTransferERC20WithInitCodeByPasmaster() public {
+        uint256 salt = 2;
+        address newWalletAddress = stealthWalletFactory.getAddress(walletOwner, salt);
+
+        vm.deal(newWalletAddress, 1 ether);
+        token.mint(newWalletAddress, 100 ether);
+        assertEq(token.balanceOf(newWalletAddress), 100 ether);
+
+        bytes memory userOpCalldata = helpers.packERC20TransferToUserOpCalldata(address(token), receiver, token.balanceOf(newWalletAddress));
+
+        bytes memory initCodePayload = helpers.packStealthWalletInitCode(walletOwner, salt, address(stealthWalletFactory));
+
+        bytes memory paymasterData = helpers.packPaymasterData(address(payMaster), block.timestamp + 1 weeks, block.timestamp - 1 weeks);
+
+        UserOperation memory userOp = UserOperation({
+            sender: newWalletAddress,
+            nonce: 0,
+            initCode: initCodePayload,
+            callData: userOpCalldata,
+            callGasLimit: 1500000,
+            verificationGasLimit: 1500000,
+            preVerificationGas: 1000000,
+            maxFeePerGas: 1500000000,
+            maxPriorityFeePerGas: 1500000000,
+            paymasterAndData: paymasterData,
+            signature: bytes("") // will be ignore when doing hash
+        });
+        bytes32 userOpHash = this.getUserOpHash(userOp, block.chainid);
+        userOp.signature = _signUserOperation(walletOwnerKey, userOpHash);
+
+        UserOperation[] memory ops = new UserOperation[](1);
+        ops[0] = userOp;
+
+        uint256 paymasterBalanceBefore = IEntryPoint(entrypoint).balanceOf(address(payMaster));
+        IEntryPoint(entrypoint).handleOps(ops, payable(walletOwner));
+        uint256 paymasterBalanceAfter = IEntryPoint(entrypoint).balanceOf(address(payMaster));
+
+        assertEq(token.balanceOf(newWalletAddress), 0);
+        assertEq(token.balanceOf(receiver), 100 ether);
+        assertTrue(paymasterBalanceAfter < paymasterBalanceBefore);
+    }
+
+    function getUserOpHash(UserOperation calldata userOp, uint256 chainId) external pure returns (bytes32) {
+        return keccak256(abi.encode(userOp.hash(), entrypoint, chainId));
+    }
+
+    function _signUserOperation(uint256 _privateKey, bytes32 userOpHash) internal pure returns (bytes memory sig) {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_privateKey, ECDSA.toEthSignedMessageHash(userOpHash));
         return abi.encodePacked(r, s, v);
     }
 }
