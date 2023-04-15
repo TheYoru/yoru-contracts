@@ -6,13 +6,8 @@ async function main() {
     const paymasterAddress = "0xe45f063B5370e62D544dC6EcF2dd14EbecA0cd55"
     const userOpHelperAddress = "0xe45f063B5370e62D544dC6EcF2dd14EbecA0cd55"
 
-    const provider = new ethers.JsonRpcProvider(
-        "",
-    )
-    const wallet = new ethers.Wallet(
-        "",
-        provider,
-    )
+    const provider = new ethers.JsonRpcProvider("")
+    const wallet = new ethers.Wallet("", provider)
     const userOpHelper = new ethers.Contract(userOpHelperAddress, userOpHelperAbi, wallet)
 
     const feeData = await provider.getFeeData()

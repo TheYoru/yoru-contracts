@@ -10,5 +10,4 @@ artifacts/
 cache/
 /lib
 
-# Signing test payload
-test/signing/payload/
+/cache_hardhat
