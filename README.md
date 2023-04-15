@@ -2,7 +2,7 @@
 
 # Short description
 
-YORU is a privacy-preserving DApp for social crypto payment. In order to achive the privacy requirement, YORU leverages the idea of account abstraction and stealth address. The crypto asset is sent to a new generated one-time address, which is owned by the receiver and the transfer would be only known by the sender and the receiver.
+YORU is a privacy-preserving DApp for social crypto payment. In order to achieve the privacy requirement, YORU leverages the idea of account abstraction and stealth address. The crypto asset is sent to a new generated one-time address, which is owned by the receiver and the transfer would be only known by the sender and the receiver.
 
 # Description
 
