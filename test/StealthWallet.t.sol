@@ -32,8 +32,8 @@ contract StealthWalletTest is Test {
     function setUp() public {
         (walletOwner, walletOwnerKey) = makeAddrAndKey("owner");
 
-        payMaster = new PayMaster(walletOwner, entrypoint);
         stealthWalletFactory = new StealthWalletFactory(entrypoint);
+        payMaster = new PayMaster(walletOwner, entrypoint, address(stealthWalletFactory));
         helper = new StealthWalletUserOpHelper(entrypoint, address(stealthWalletFactory));
         token = new ERC20Mintable("Test Token", "TT");
 
@@ -116,9 +116,10 @@ contract StealthWalletTest is Test {
         uint256 salt = 2;
         address newWalletAddress = stealthWalletFactory.getAddress(walletOwner, salt);
 
-        vm.deal(newWalletAddress, 1 ether);
         token.mint(newWalletAddress, 100 ether);
         assertEq(token.balanceOf(newWalletAddress), 100 ether);
+        // make sure newWalletAddress doesn't have eth so gas must paid by paymaster
+        assertEq(newWalletAddress.balance, 0);
 
         (UserOperation memory userOp, bytes32 userOpHash) = helper.transferERC20_withInitcode_withPaymaster_UserOp(
             address(token),

@@ -9,6 +9,7 @@ import { IPaymaster } from "./interfaces/IPaymaster.sol";
 
 contract PayMaster is IPaymaster, Ownable {
     IEntryPoint public immutable entryPoint;
+    address public immutable walletFactory;
 
     uint256 private constant VALID_TIMESTAMP_OFFSET = 20;
     uint256 private constant SIGNATURE_OFFSET = 84;
@@ -18,8 +19,9 @@ contract PayMaster is IPaymaster, Ownable {
         _;
     }
 
-    constructor(address _owner, address _entryPoint) Ownable(_owner) {
+    constructor(address _owner, address _entryPoint, address _walletFactory) Ownable(_owner) {
         entryPoint = IEntryPoint(_entryPoint);
+        walletFactory = _walletFactory;
     }
 
     function validatePaymasterUserOp(
@@ -29,9 +31,12 @@ contract PayMaster is IPaymaster, Ownable {
     ) external override onlyEntryPoint returns (bytes memory context, uint256 validationData) {
         (userOpHash, maxCost); // unused
 
-        // TODO check whether initCode has valid factory address
-        (uint48 validUntil, uint48 validAfter, ) = _parsePaymasterAndData(userOp.paymasterAndData);
+        address _walletFactory = address(bytes20(userOp.initCode[:20]));
+        if (_walletFactory != walletFactory) {
+            return ("", _packValidationData(address(1234), uint256(0), uint256(0)));
+        }
 
+        (uint48 validUntil, uint48 validAfter, ) = _parsePaymasterAndData(userOp.paymasterAndData);
         return ("", _packValidationData(address(0), uint256(validUntil), uint256(validAfter)));
     }
 
