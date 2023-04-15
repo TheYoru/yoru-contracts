@@ -61,6 +61,9 @@ contract StealthWalletTest is Test {
     }
 
     function testTransferERC20() public {
+        uint256 salt = 0;
+        stealthWallet = stealthWalletFactory.createAccount(walletOwner, salt);
+
         vm.deal(address(stealthWallet), 1 ether);
         token.mint(address(stealthWallet), 100 ether);
         assertEq(token.balanceOf(address(stealthWallet)), 100 ether);
