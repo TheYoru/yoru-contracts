@@ -11,3 +11,4 @@ cache/
 /lib
 
 /cache_hardhat
+/script/**/*.json
