@@ -7,8 +7,8 @@ import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { StealthWallet } from "contracts/StealthWallet.sol";
 import { StealthWalletFactory } from "contracts/StealthWalletFactory.sol";
 import { PayMaster } from "contracts/PayMaster.sol";
+import { StealthWalletUserOpHelper } from "contracts/StealthWalletUserOpHelper.sol";
 
-import { StealthWalletUtils } from "./utils/StealthWalletUtils.sol";
 import { ERC20Mintable } from "./utils/ERC20Mintable.sol";
 
 import { Test } from "forge-std/Test.sol";
@@ -26,7 +26,7 @@ contract StealthWalletTest is Test {
     PayMaster payMaster;
     StealthWalletFactory public stealthWalletFactory;
     StealthWallet public stealthWallet;
-    StealthWalletUtils public helpers = new StealthWalletUtils();
+    StealthWalletUserOpHelper public helper;
 
     ERC20Mintable token;
 
@@ -35,6 +35,7 @@ contract StealthWalletTest is Test {
 
         payMaster = new PayMaster(walletOwner, entrypoint);
         stealthWalletFactory = new StealthWalletFactory(entrypoint);
+        helper = new StealthWalletUserOpHelper(entrypoint, address(stealthWalletFactory));
         token = new ERC20Mintable("Test Token", "TT");
 
         // Setup paymaster
@@ -64,25 +65,14 @@ contract StealthWalletTest is Test {
         token.mint(address(stealthWallet), 100 ether);
         assertEq(token.balanceOf(address(stealthWallet)), 100 ether);
 
-        bytes memory userOpCalldata = helpers.packERC20TransferToUserOpCalldata(address(token), receiver, token.balanceOf(address(stealthWallet)));
-
-        // Signature does not matter here since getUserOpHash() will truncate it
-        UserOperation memory userOp = UserOperation({
-            sender: address(stealthWallet),
-            nonce: 0,
-            initCode: bytes(""),
-            callData: userOpCalldata,
-            callGasLimit: 1000000,
-            verificationGasLimit: 500000,
-            preVerificationGas: 100000,
-            maxFeePerGas: 1500000000,
-            maxPriorityFeePerGas: 1500000000,
-            paymasterAndData: bytes(""),
-            signature: bytes("") // will be ignore when doing hash
-        });
-
-        bytes32 userOpHash = this.getUserOpHash(userOp, block.chainid);
-
+        (UserOperation memory userOp, bytes32 userOpHash) = helper.transferERC20_UserOp(
+            address(stealthWallet),
+            address(token),
+            receiver,
+            token.balanceOf(address(stealthWallet)),
+            1500000000,
+            1500000000
+        );
         userOp.signature = _signUserOperation(walletOwnerKey, userOpHash);
 
         UserOperation[] memory ops = new UserOperation[](1);
@@ -102,24 +92,16 @@ contract StealthWalletTest is Test {
         token.mint(newWalletAddress, 100 ether);
         assertEq(token.balanceOf(newWalletAddress), 100 ether);
 
-        bytes memory userOpCalldata = helpers.packERC20TransferToUserOpCalldata(address(token), receiver, token.balanceOf(newWalletAddress));
+        (UserOperation memory userOp, bytes32 userOpHash) = helper.transferERC20_withInitcode_UserOp(
+            address(token),
+            receiver,
+            token.balanceOf(address(newWalletAddress)),
+            walletOwner,
+            salt,
+            1500000000,
+            1500000000
+        );
 
-        bytes memory initCodePayload = helpers.packStealthWalletInitCode(walletOwner, salt, address(stealthWalletFactory));
-
-        UserOperation memory userOp = UserOperation({
-            sender: newWalletAddress,
-            nonce: 0,
-            initCode: initCodePayload,
-            callData: userOpCalldata,
-            callGasLimit: 1500000,
-            verificationGasLimit: 1500000,
-            preVerificationGas: 1000000,
-            maxFeePerGas: 1500000000,
-            maxPriorityFeePerGas: 1500000000,
-            paymasterAndData: bytes(""),
-            signature: bytes("") // will be ignore when doing hash
-        });
-        bytes32 userOpHash = this.getUserOpHash(userOp, block.chainid);
         userOp.signature = _signUserOperation(walletOwnerKey, userOpHash);
 
         UserOperation[] memory ops = new UserOperation[](1);
@@ -139,26 +121,18 @@ contract StealthWalletTest is Test {
         token.mint(newWalletAddress, 100 ether);
         assertEq(token.balanceOf(newWalletAddress), 100 ether);
 
-        bytes memory userOpCalldata = helpers.packERC20TransferToUserOpCalldata(address(token), receiver, token.balanceOf(newWalletAddress));
+        (UserOperation memory userOp, bytes32 userOpHash) = helper.transferERC20_withInitcode_withPaymaster_UserOp(
+            address(token),
+            receiver,
+            token.balanceOf(address(newWalletAddress)),
+            walletOwner,
+            salt,
+            address(payMaster),
+            block.timestamp,
+            1500000000,
+            1500000000
+        );
 
-        bytes memory initCodePayload = helpers.packStealthWalletInitCode(walletOwner, salt, address(stealthWalletFactory));
-
-        bytes memory paymasterData = helpers.packPaymasterData(address(payMaster), block.timestamp + 1 weeks, block.timestamp - 1 weeks);
-
-        UserOperation memory userOp = UserOperation({
-            sender: newWalletAddress,
-            nonce: 0,
-            initCode: initCodePayload,
-            callData: userOpCalldata,
-            callGasLimit: 500000,
-            verificationGasLimit: 1000000,
-            preVerificationGas: 100000,
-            maxFeePerGas: 1500000000,
-            maxPriorityFeePerGas: 1500000000,
-            paymasterAndData: paymasterData,
-            signature: bytes("") // will be ignore when doing hash
-        });
-        bytes32 userOpHash = this.getUserOpHash(userOp, block.chainid);
         userOp.signature = _signUserOperation(walletOwnerKey, userOpHash);
 
         UserOperation[] memory ops = new UserOperation[](1);
