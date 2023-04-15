@@ -2,21 +2,21 @@
 
 # Short description
 
-YORU is a privacy-preserving DApp for social crypto payment. YORU leverages account abstraction and stealth address to make a token transfer. Token is sent to a one-time address, which is owned by the receiver and only known by the sender and the receiver.
+YORU is a privacy-preserving DApp for social crypto payment. In order to achive the privacy requirement, YORU leverages the idea of account abstraction and stealth address. The crypto asset is sent to a new generated one-time address, which is owned by the receiver and the transfer would be only known by the sender and the receiver.
 
 # Description
 
 ## Problem statement
 
-There are two main challenges for social crypto payment.
+There are two main challenges for crypto payment.
 
 1. **Anyone can track transaction history**.
-    - Transaction is transparent and can be traceable on chain if the receiver address is the same. This is not allowed for social payment if anyone other than the sender and the receiver make sense of the asset transfer. In addition, anyone can track the wallet balance from the same address.
-2. **User experience is bad on web3**.
-    - First, it’s difficult for users to remember wallet addresses. We can remember our friends’ social media accounts, but we cannot remember his wallet address.
+    - Each transaction is transparent and traceable on chain if the address is given. It's is not appropriate to expose transfer details of a crypto payment to anyone other than involved parties.
+2. **Bas user experience in web3**.
+    - First, it's difficult for users to memorize those lengthy and meaningless wallet addresses. It's more easy for people to recall friends’ social media accounts or email address which are usually more meaningful words.
     - Second, anyone who sends an Ethereum transaction needs to pay ETH for gas fees. If a user receives some tokens from others, he needs to buy some ETH before withdrawing the tokens.
 
-Imagine a scenario where a merchant receives tokens from his customers, but everyone knows how much the merchant earned everyday by monitoring the receiving address. Another case is that we do know who participates in ETHTokyo hackathon, if we watch the registration address. That is bad user experience for crypto payment and is privacy compromising.
+Imagine a scenario where a merchant receives tokens from his customers, but everyone knows how much the merchant earned everyday by monitoring the receiving address. Another case is that one could know who participates in ETHTokyo hackathon by parsing the history of registration address. It's obvious that current mechanism of crypto transferring does not meet the privacy needs of crypto payment.
 
 ## Solution
 
