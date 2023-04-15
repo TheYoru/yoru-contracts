@@ -14,6 +14,9 @@ interface IEntryPoint is IStakeManager {
         bytes signature;
     }
 
+    /// @return the deposit (for gas payment) of the account
+    function balanceOf(address account) external view returns (uint256);
+
     function handleOps(UserOperation[] calldata ops, address payable beneficiary) external;
 
     function handleAggregatedOps(UserOpsPerAggregator[] calldata opsPerAggregator, address payable beneficiary) external;
