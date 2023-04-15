@@ -1,16 +1,15 @@
 pragma solidity 0.8.17;
 
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@account-abstraction/core/BaseAccount.sol";
+import { BaseAccount, IEntryPoint, UserOperation, UserOperationLib } from "@account-abstraction/core/BaseAccount.sol";
 
 import { Ownable } from "./abstracts/Ownable.sol";
 import { IERC1271Wallet } from "./interfaces/IERC1271Wallet.sol";
-import "forge-std/console.sol";
 
 contract StealthWallet is Ownable, BaseAccount, IERC1271Wallet {
     using ECDSA for bytes32;
 
-    address immutable _entryPoint;
+    address private immutable _entryPoint;
 
     // bytes4(keccak256("isValidSignature(bytes32,bytes)"))
     bytes4 internal constant ERC1271_MAGICVALUE = 0x1626ba7e;
